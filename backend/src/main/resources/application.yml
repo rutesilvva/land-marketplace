@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: land-marketplace-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/land_marketplace}
+    username: ${DB_USERNAME:land_user}
+    password: ${DB_PASSWORD:land_password}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+server:
+  error:
+    include-message: never
+
