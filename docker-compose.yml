@@ -1,0 +1,32 @@
+services:
+  database:
+    image: postgis/postgis:17-3.5
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-land_marketplace}
+      POSTGRES_USER: ${POSTGRES_USER:-land_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-land_password}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: ./backend
+    environment:
+      DB_URL: jdbc:postgresql://database:5432/${POSTGRES_DB:-land_marketplace}
+      DB_USERNAME: ${POSTGRES_USER:-land_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-land_password}
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
+
