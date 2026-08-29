@@ -45,13 +45,13 @@ class LandControllerTest {
         var geometry = objectMapper.readTree("""
             {"type":"Polygon","coordinates":[[[0,0],[1,0],[1,1],[0,0]]]}
             """);
-        when(service.create(any())).thenReturn(new LandResponse(id, new BigDecimal("100.00"),
-            "Lot", "seller@example.com", geometry, Instant.parse("2026-08-20T12:00:00Z")));
+        when(service.create(any(), any())).thenReturn(new LandResponse(id, new BigDecimal("100.00"),
+            "Lot", "seller@example.com", geometry, Instant.parse("2026-08-20T12:00:00Z"), null, null));
 
         mockMvc.perform(post("/api/lands").contentType(MediaType.APPLICATION_JSON).content("""
                 {"price":100,"description":"Lot","contact":"seller@example.com",
                  "geometry":{"type":"Polygon","coordinates":[[[0,0],[1,0],[1,1],[0,0]]]}}
-                """))
+                """).principal(() -> "seller@example.com"))
             .andExpect(status().isCreated())
             .andExpect(header().string("Location", "/api/lands/" + id))
             .andExpect(jsonPath("$.id").value(id.toString()));
@@ -74,22 +74,47 @@ class LandControllerTest {
 
     @Test
     void reportsAnOverlapAsConflict() throws Exception {
-        when(service.create(any())).thenThrow(new LandOverlapException());
+        when(service.create(any(), any())).thenThrow(new LandOverlapException());
         mockMvc.perform(post("/api/lands").contentType(MediaType.APPLICATION_JSON).content("""
                 {"price":100,"description":"Lot","contact":"seller@example.com",
                  "geometry":{"type":"Polygon","coordinates":[[[0,0],[1,0],[1,1],[0,0]]]}}
-                """))
+                """).principal(() -> "seller@example.com"))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.message").value("The land area overlaps an existing listing."));
     }
 
     @Test
     void reportsInvalidGeoJsonAsBadRequest() throws Exception {
-        when(service.create(any())).thenThrow(new InvalidGeometryException("Geometry must be valid GeoJSON."));
+        when(service.create(any(), any())).thenThrow(new InvalidGeometryException("Geometry must be valid GeoJSON."));
         mockMvc.perform(post("/api/lands").contentType(MediaType.APPLICATION_JSON).content("""
                 {"price":100,"description":"Lot","contact":"seller@example.com","geometry":{}}
-                """))
+                """).principal(() -> "seller@example.com"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("Geometry must be valid GeoJSON."));
+    }
+
+    @Test
+    void searchesWithinACircle() throws Exception {
+        when(service.search(-38.54, -3.73, 1200)).thenReturn(List.of());
+        mockMvc.perform(get("/api/lands/search")
+                .param("longitude", "-38.54").param("latitude", "-3.73").param("radiusMeters", "1200"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    void rejectsInvalidSearchCoordinates() throws Exception {
+        mockMvc.perform(get("/api/lands/search")
+                .param("longitude", "200").param("latitude", "-3.73").param("radiusMeters", "1200"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Search coordinates are outside valid longitude and latitude ranges."));
+    }
+
+    @Test
+    void rejectsInvalidSearchRadius() throws Exception {
+        mockMvc.perform(get("/api/lands/search")
+                .param("longitude", "-38.54").param("latitude", "-3.73").param("radiusMeters", "0"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Search radius must be between 0 and 500000 meters."));
     }
 }

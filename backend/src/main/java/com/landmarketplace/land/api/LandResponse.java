@@ -11,6 +11,7 @@ public record LandResponse(
     String description,
     String contact,
     JsonNode geometry,
-    Instant createdAt
+    Instant createdAt,
+    UUID ownerId,
+    String ownerName
 ) {}
-
