@@ -1,6 +1,6 @@
-# Land Marketplace
+# Parcel
 
-Land Marketplace is an interactive platform for publishing and discovering land listings through geospatial data.
+Parcel is an interactive land marketplace for publishing, discovering, and negotiating land listings through geospatial data.
 
 ## Current scope: complete mandatory project
 
