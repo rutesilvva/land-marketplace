@@ -119,9 +119,9 @@ export default function App() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <a className="brand" href="/" aria-label="Terra home">
-          <span className="brand-mark">T</span>
-          <span>terra<small>land marketplace</small></span>
+        <a className="brand" href="/" aria-label="Parcel home">
+          <span className="brand-mark">P</span>
+          <span>Parcel<small>land marketplace</small></span>
         </a>
         <div className="header-meta"><span className="live-dot" /> {lands.length} active {lands.length === 1 ? 'listing' : 'listings'}</div>
         <div className="header-actions">

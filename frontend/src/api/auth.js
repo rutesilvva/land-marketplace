@@ -1,4 +1,4 @@
-const KEY = 'terra-credentials';
+const KEY = 'parcel-credentials';
 
 export function credentials() { return localStorage.getItem(KEY); }
 export function authorizationHeaders() { const value = credentials(); return value ? { Authorization: `Basic ${value}` } : {}; }
