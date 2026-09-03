@@ -22,6 +22,10 @@ The implemented application currently provides:
 - authenticated listing publication and listing ownership;
 - purchase proposals with buyer and seller inboxes;
 - proposal acceptance, rejection, and withdrawal workflows;
+- advanced price, area, owner, and ordering filters;
+- PostGIS-based parcel area calculation;
+- 30-minute buyer reservations with ownership controls;
+- automatic rejection of competing pending proposals after an offer is accepted;
 - a complete three-service Docker Compose environment;
 - automated backend and frontend tests with enforced 80% coverage gates.
 
@@ -81,6 +85,8 @@ Map browsing and spatial search are public. Create an account or sign in before 
 
 Select a land owned by another user and choose **Make proposal** to send an amount and message. The **Proposals** workspace separates received and sent proposals. A land owner may accept or reject a pending offer, while its buyer may withdraw it. Each buyer can have only one pending proposal per land.
 
+Use the filter bar to constrain visible listings by price, area, or owner and to order results by date, price, or area. Filters can also refine circular map-search results. Authenticated buyers may reserve an available listing for 30 minutes; only the reservation holder can cancel it. Accepting an offer automatically rejects every other pending offer for that listing.
+
 Account endpoints are available below `/api/auth`; proposal endpoints are available below `/api/proposals`. All endpoints except registration require authentication.
 
 ## Run with Docker
@@ -127,7 +133,7 @@ npm test
 
 Docker must be running for `mvn verify`: the repository integration test always starts a real PostGIS container and fails instead of being silently skipped when Docker is unavailable. Testcontainers 1.21.4 is pinned so the standard command works with recent Docker Engine releases, including Docker 29.
 
-Both builds fail if coverage drops below 80%. Backend coverage is generated at `backend/target/site/jacoco/index.html`, and frontend coverage at `frontend/coverage/index.html`. The backend has 25 passing tests with no skips, including the real PostGIS repository test, and 81.65% line coverage across the application packages. The frontend has 28 tests with 97.94% line coverage, 94% statement coverage, 91.46% function coverage, and 88.78% branch coverage. Map, authentication, and proposal components are included in these metrics; only the React bootstrap entry point and test support files are excluded.
+Both builds fail if coverage drops below 80%. Backend coverage is generated at `backend/target/site/jacoco/index.html`, and frontend coverage at `frontend/coverage/index.html`. The backend has 27 passing tests with no skips, including the real PostGIS repository test, and 82.63% line coverage. The frontend has 34 tests with 94.54% line coverage, 90.84% statement coverage, 87.62% function coverage, and 82.66% branch coverage. Map, filters, authentication, and proposal components are included in these metrics; only the React bootstrap entry point and test support files are excluded.
 
 ## Delivery roadmap
 
@@ -136,4 +142,4 @@ Both builds fail if coverage drops below 80%. Backend coverage is generated at `
 - Part 3: mouse-driven circular search and PostGIS intersection query — complete.
 - Part 4: integration hardening, complete Compose environment, end-to-end validation, and final documentation — complete.
 
-The mandatory requirements and the authentication and purchase-proposal extensions are complete.
+The mandatory requirements and the authentication, advanced discovery, reservation, and purchase-proposal extensions are complete.

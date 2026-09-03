@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
-import { createLand, getLands, searchLands } from './api/lands.js';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { cancelLandReservation, createLand, getLands, reserveLand, searchLands } from './api/lands.js';
 import LandForm from './components/LandForm.jsx';
 import LandMap from './components/LandMap.jsx';
 import AuthPanel from './components/AuthPanel.jsx';
 import ProposalPanel from './components/ProposalPanel.jsx';
+import LandFilters, { applyLandFilters, emptyFilters } from './components/LandFilters.jsx';
 import { clearCredentials, currentUser, login, register } from './api/auth.js';
 
 export default function App() {
@@ -18,6 +19,8 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [proposalLand, setProposalLand] = useState(undefined);
+  const [filters, setFilters] = useState(emptyFilters);
+  const visibleLands = useMemo(() => applyLandFilters(lands, filters), [lands, filters]);
 
   const loadLands = useCallback(async () => {
     try {
@@ -116,6 +119,15 @@ export default function App() {
     setNotice({ type: 'success', message: 'You are signed out.' });
   }
 
+  async function changeReservation(land, cancel = false) {
+    try {
+      const updated = cancel ? await cancelLandReservation(land.id) : await reserveLand(land.id);
+      const replace = (items) => items.map((item) => item.id === updated.id ? updated : item);
+      setLands(replace); setAllLands(replace); setSelectedLand(updated);
+      setNotice({ type: 'success', message: cancel ? 'Reservation cancelled.' : 'Land reserved for 30 minutes.' });
+    } catch (error) { setNotice({ type: 'error', message: error.message }); }
+  }
+
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -123,7 +135,7 @@ export default function App() {
           <span className="brand-mark">P</span>
           <span>Parcel<small>land marketplace</small></span>
         </a>
-        <div className="header-meta"><span className="live-dot" /> {lands.length} active {lands.length === 1 ? 'listing' : 'listings'}</div>
+        <div className="header-meta"><span className="live-dot" /> {visibleLands.length} active {visibleLands.length === 1 ? 'listing' : 'listings'}</div>
         <div className="header-actions">
         {user ? <><button className="button secondary" type="button" onClick={() => setProposalLand(null)}>Proposals</button><span className="user-chip">{user.name}</span><button className="button secondary" type="button" onClick={logout}>Sign out</button></> : <button className="button secondary" type="button" onClick={() => setAuthOpen(true)}>Sign in</button>}
         <button className="button search-button" type="button" onClick={startSearch} disabled={Boolean(drawMode)}>
@@ -141,10 +153,11 @@ export default function App() {
         <h1>Land, clearly mapped.</h1>
         <p>Browse verified boundaries or draw your own parcel to publish a listing.</p>
       </section>
+      <LandFilters filters={filters} onChange={setFilters} onClear={() => setFilters(emptyFilters)} />
 
       <section className="map-card">
         <LandMap
-          lands={lands}
+          lands={visibleLands}
           drawMode={drawMode}
           selectedLand={selectedLand}
           onPolygonDrawn={finishDrawing}
@@ -153,6 +166,7 @@ export default function App() {
           onClosePopup={closePopup}
           user={user}
           onProposal={setProposalLand}
+          onReservation={changeReservation}
         />
         <div className="map-legend"><span /> Available land</div>
       </section>

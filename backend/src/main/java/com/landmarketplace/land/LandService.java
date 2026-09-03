@@ -6,6 +6,7 @@ import com.landmarketplace.user.User;
 import com.landmarketplace.user.UserService;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import org.locationtech.jts.geom.Polygon;
@@ -57,10 +58,38 @@ public class LandService {
             .toList();
     }
 
+    @Transactional
+    public LandResponse reserve(UUID landId, String email) {
+        Land land = repository.findById(landId).orElseThrow(() -> new IllegalArgumentException("Land listing was not found."));
+        User user = userService.require(email);
+        if (land.getOwner() != null && land.getOwner().getId().equals(user.getId())) {
+            throw new IllegalStateException("You cannot reserve your own listing.");
+        }
+        Instant now = Instant.now(clock);
+        if (land.isReservedAt(now) && !land.getReservedBy().getId().equals(user.getId())) {
+            throw new IllegalStateException("This land is currently reserved by another buyer.");
+        }
+        land.reserve(user, now.plus(Duration.ofMinutes(30)));
+        return toResponse(land);
+    }
+
+    @Transactional
+    public LandResponse cancelReservation(UUID landId, String email) {
+        Land land = repository.findById(landId).orElseThrow(() -> new IllegalArgumentException("Land listing was not found."));
+        User user = userService.require(email);
+        if (!land.isReservedAt(Instant.now(clock)) || !land.getReservedBy().getId().equals(user.getId())) {
+            throw new SecurityException("Only the buyer holding this reservation can cancel it.");
+        }
+        land.clearReservation();
+        return toResponse(land);
+    }
+
     private LandResponse toResponse(Land land) {
         User owner = land.getOwner();
         return new LandResponse(land.getId(), land.getPrice(), land.getDescription(), land.getContact(),
             geoJsonMapper.toJson(land.getGeometry()), land.getCreatedAt(), owner == null ? null : owner.getId(),
-            owner == null ? null : owner.getName());
+            owner == null ? null : owner.getName(), repository.areaSquareMeters(land.getId()),
+            land.isReservedAt(Instant.now(clock)), land.isReservedAt(Instant.now(clock)) ? land.getReservedBy().getId() : null,
+            land.isReservedAt(Instant.now(clock)) ? land.getReservedUntil() : null);
     }
 }

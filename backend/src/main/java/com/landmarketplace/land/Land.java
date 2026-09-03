@@ -37,6 +37,13 @@ public class Land {
     @JoinColumn(name = "owner_id")
     private User owner;
 
+    @ManyToOne
+    @JoinColumn(name = "reserved_by")
+    private User reservedBy;
+
+    @Column(name = "reserved_until")
+    private Instant reservedUntil;
+
     protected Land() {}
 
     public Land(UUID id, BigDecimal price, String description, String contact, Polygon geometry, Instant createdAt) {
@@ -60,4 +67,9 @@ public class Land {
     public Polygon getGeometry() { return geometry; }
     public Instant getCreatedAt() { return createdAt; }
     public User getOwner() { return owner; }
+    public User getReservedBy() { return reservedBy; }
+    public Instant getReservedUntil() { return reservedUntil; }
+    public boolean isReservedAt(Instant now) { return reservedBy != null && reservedUntil != null && reservedUntil.isAfter(now); }
+    public void reserve(User user, Instant until) { reservedBy = user; reservedUntil = until; }
+    public void clearReservation() { reservedBy = null; reservedUntil = null; }
 }

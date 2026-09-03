@@ -36,4 +36,7 @@ public interface LandRepository extends JpaRepository<Land, UUID> {
         @Param("latitude") double latitude,
         @Param("radiusMeters") double radiusMeters
     );
+
+    @Query(value = "SELECT ST_Area(geometry::geography) FROM lands WHERE id = :id", nativeQuery = true)
+    double areaSquareMeters(@Param("id") UUID id);
 }

@@ -32,6 +32,13 @@ public class ProposalService {
         if (next==ProposalStatus.WITHDRAWN && !buyer) throw new SecurityException("Only the buyer can withdraw this proposal.");
         if ((next==ProposalStatus.ACCEPTED || next==ProposalStatus.REJECTED) && !owner) throw new SecurityException("Only the land owner can answer this proposal.");
         if (next==ProposalStatus.PENDING) throw new IllegalArgumentException("The requested status transition is invalid.");
-        proposal.changeStatus(next); return proposal;
+        proposal.changeStatus(next);
+        if (next == ProposalStatus.ACCEPTED) {
+            java.util.Optional.ofNullable(repository.findByLandIdAndStatus(proposal.getLand().getId(), ProposalStatus.PENDING))
+                .orElseGet(java.util.List::of).stream()
+                .filter(other -> !other.getId().equals(proposal.getId()))
+                .forEach(other -> other.changeStatus(ProposalStatus.REJECTED));
+        }
+        return proposal;
     }
 }

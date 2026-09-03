@@ -16,6 +16,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -78,5 +79,29 @@ class LandServiceTest {
         when(repository.findIntersectingCircle(-38.54, -3.73, 1500)).thenReturn(List.of(land));
         assertThat(service.search(-38.54, -3.73, 1500)).singleElement()
             .extracting(response -> response.contact()).isEqualTo("seller@example.com");
+    }
+
+    @Test
+    void reservesAndCancelsLandForBuyer() {
+        User owner = new User(java.util.UUID.randomUUID(), "Owner", "owner@example.com", "hash", Instant.now());
+        User buyer = new User(java.util.UUID.randomUUID(), "Buyer", "buyer@example.com", "hash", Instant.now());
+        Land land = new Land(java.util.UUID.randomUUID(), request.price(), "Rural lot", "seller@example.com",
+            mapper.toPolygon(request.geometry()), Instant.now(), owner);
+        when(repository.findById(land.getId())).thenReturn(Optional.of(land));
+        when(userService.require("buyer@example.com")).thenReturn(buyer);
+        var reserved = service.reserve(land.getId(), "buyer@example.com");
+        assertThat(reserved.reserved()).isTrue();
+        assertThat(reserved.reservedById()).isEqualTo(buyer.getId());
+        assertThat(service.cancelReservation(land.getId(), "buyer@example.com").reserved()).isFalse();
+    }
+
+    @Test
+    void refusesReservationByOwner() {
+        User owner = new User(java.util.UUID.randomUUID(), "Owner", "owner@example.com", "hash", Instant.now());
+        Land land = new Land(java.util.UUID.randomUUID(), request.price(), "Rural lot", "seller@example.com",
+            mapper.toPolygon(request.geometry()), Instant.now(), owner);
+        when(repository.findById(land.getId())).thenReturn(Optional.of(land));
+        when(userService.require("owner@example.com")).thenReturn(owner);
+        assertThatThrownBy(() -> service.reserve(land.getId(), "owner@example.com")).isInstanceOf(IllegalStateException.class);
     }
 }

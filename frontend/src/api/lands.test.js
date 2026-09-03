@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createLand, getLands, searchLands } from './lands.js';
+import { cancelLandReservation, createLand, getLands, reserveLand, searchLands } from './lands.js';
 
 describe('land API', () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -37,6 +37,11 @@ describe('land API', () => {
     await searchLands({ longitude: -38.54, latitude: -3.73, radiusMeters: 1200 });
     expect(fetchMock.mock.calls[0][0]).toContain('/api/lands/search?');
     expect(fetchMock.mock.calls[0][0]).toContain('radiusMeters=1200');
+  });
+  it('creates and cancels reservations', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: vi.fn().mockResolvedValue({ id: 'land-1' }) }); vi.stubGlobal('fetch', fetchMock);
+    await reserveLand('land-1'); expect(fetchMock).toHaveBeenLastCalledWith('/api/lands/land-1/reservation', expect.objectContaining({ method: 'POST' }));
+    await cancelLandReservation('land-1'); expect(fetchMock).toHaveBeenLastCalledWith('/api/lands/land-1/reservation', expect.objectContaining({ method: 'DELETE' }));
   });
 
   it('falls back safely when an error is not JSON', async () => {

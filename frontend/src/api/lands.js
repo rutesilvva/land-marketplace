@@ -31,3 +31,6 @@ export function searchLands({ longitude, latitude, radiusMeters }) {
   const params = new URLSearchParams({ longitude, latitude, radiusMeters });
   return request(`/api/lands/search?${params}`);
 }
+
+export function reserveLand(id) { return request(`/api/lands/${id}/reservation`, { method: 'POST' }); }
+export function cancelLandReservation(id) { return request(`/api/lands/${id}/reservation`, { method: 'DELETE' }); }

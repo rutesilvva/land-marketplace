@@ -13,5 +13,14 @@ public record LandResponse(
     JsonNode geometry,
     Instant createdAt,
     UUID ownerId,
-    String ownerName
-) {}
+    String ownerName,
+    double areaSquareMeters,
+    boolean reserved,
+    UUID reservedById,
+    Instant reservedUntil
+) {
+    public LandResponse(UUID id, BigDecimal price, String description, String contact, JsonNode geometry,
+                        Instant createdAt, UUID ownerId, String ownerName) {
+        this(id, price, description, contact, geometry, createdAt, ownerId, ownerName, 0, false, null, null);
+    }
+}

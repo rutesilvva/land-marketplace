@@ -8,4 +8,5 @@ public interface ProposalRepository extends JpaRepository<Proposal, UUID> {
     boolean existsByLandIdAndBuyerIdAndStatus(UUID landId, UUID buyerId, ProposalStatus status);
     List<Proposal> findByBuyerIdOrderByCreatedAtDesc(UUID buyerId);
     List<Proposal> findByLandOwnerIdOrderByCreatedAtDesc(UUID ownerId);
+    List<Proposal> findByLandIdAndStatus(UUID landId, ProposalStatus status);
 }

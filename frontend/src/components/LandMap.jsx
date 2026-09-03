@@ -24,7 +24,7 @@ const draftStyle = new Style({
   stroke: new Stroke({ color: '#e18a24', width: 3, lineDash: [8, 7] }),
 });
 
-export default function LandMap({ lands, drawMode, selectedLand, onPolygonDrawn, onCircleDrawn, onLandSelect, onClosePopup, user, onProposal }) {
+export default function LandMap({ lands, drawMode, selectedLand, onPolygonDrawn, onCircleDrawn, onLandSelect, onClosePopup, user, onProposal, onReservation }) {
   const targetRef = useRef(null);
   const popupRef = useRef(null);
   const mapRef = useRef(null);
@@ -124,7 +124,7 @@ export default function LandMap({ lands, drawMode, selectedLand, onPolygonDrawn,
     <div className={`map-stage ${drawMode ? 'is-drawing' : ''}`}>
       <div ref={targetRef} className="map" aria-label="Interactive land map" />
       <div ref={popupRef}>
-        <LandPopup land={selectedLand} onClose={onClosePopup} user={user} onProposal={onProposal} />
+        <LandPopup land={selectedLand} onClose={onClosePopup} user={user} onProposal={onProposal} onReservation={onReservation} />
       </div>
       {drawMode === 'polygon' && <div className="draw-hint"><span>1</span> Click points to outline the land. Double-click to finish.</div>}
       {drawMode === 'circle' && <div className="draw-hint"><span>⌖</span> Click and drag to set the search radius. {liveRadius ? `${liveRadius.toLocaleString()} m` : ''}</div>}
